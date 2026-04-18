@@ -1,0 +1,72 @@
+<!-- Comment1 from the web  -->
+<!-- Comment2 from the laptop  -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 10px;
+            width: 200px;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #output {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Enter your name</h2>
+    <input type="text" id="nameInput" placeholder="Your name" />
+    <br>
+    <button onclick="sayHello()">Submit</button>
+    <div id="output"></div>
+</div>
+
+<script>
+    function sayHello() {
+        const name = document.getElementById("nameInput").value;
+        if (name.trim() !== "") {
+            document.getElementById("output").innerText = "Hello " + name;
+        }
+    }
+
+    // Submit on Enter key
+    document.getElementById("nameInput").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            sayHello();
+        }
+    });
+</script>
+
+</body>
+</html>
