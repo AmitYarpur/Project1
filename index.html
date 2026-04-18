@@ -1,71 +1,225 @@
-<!-- Comment1 from the web  -->
-<!-- Comment2 from the laptop  -->
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Hello Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        input {
-            padding: 10px;
-            font-size: 16px;
-            margin-top: 10px;
-            width: 200px;
-        }
-        button {
-            margin-top: 15px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        #output {
-            margin-top: 20px;
-            font-size: 20px;
-            font-weight: bold;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Word Trainer</title>
+
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    background: #f5f7fa;
+    padding: 50px;
+}
+
+.container {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    width: 420px;
+    margin: auto;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+    margin: 5px;
+}
+
+input {
+    padding: 10px;
+    width: 80%;
+    margin-top: 10px;
+}
+
+#word {
+    font-size: 26px;
+    margin: 20px;
+    font-weight: bold;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
-    <h2>Enter your name</h2>
-    <input type="text" id="nameInput" placeholder="Your name" />
-    <br>
-    <button onclick="sayHello()">Submit</button>
-    <div id="output"></div>
+    <h2>📚 Word Trainer</h2>
+
+    <!-- Mode selection -->
+    <button onclick="chooseFileMode()">📂 Upload File</button>
+    <button onclick="useDefaultWords()">⚡ Auto Words</button>
+
+    <div id="fileSection" style="display:none;">
+        <input type="file" id="fileInput"><br><br>
+        <button onclick="loadFile()">Load Words</button>
+    </div>
+
+    <div id="quiz" style="display:none;">
+        <div id="word"></div>
+        <input type="text" id="answer" placeholder="Type Hebrew...">
+        <br><br>
+        <button onclick="checkAnswer()">Submit</button>
+    </div>
 </div>
 
+<canvas id="canvas"></canvas>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
 <script>
-    function sayHello() {
-        const name = document.getElementById("nameInput").value;
-        if (name.trim() !== "") {
-            document.getElementById("output").innerText = "Hello " + name;
-        }
+let words = [];
+let current = null;
+
+// Built-in words
+const defaultWords = [
+    { en: "hello", he: "שלום" },
+    { en: "dog", he: "כלב" },
+    { en: "cat", he: "חתול" },
+    { en: "house", he: "בית" },
+    { en: "car", he: "מכונית" }
+];
+
+// Choose file mode
+function chooseFileMode() {
+    document.getElementById("fileSection").style.display = "block";
+}
+
+// Use default words
+function useDefaultWords() {
+    words = defaultWords;
+    startQuiz();
+}
+
+// Load file
+function loadFile() {
+    const file = document.getElementById('fileInput').files[0];
+    if (!file) return alert("Choose file first");
+
+    if (file.type === "application/pdf") {
+        readPDF(file);
+    } else {
+        readTXT(file);
+    }
+}
+
+// Read TXT
+function readTXT(file) {
+    const reader = new FileReader();
+    reader.onload = e => parseText(e.target.result);
+    reader.readAsText(file);
+}
+
+// Read PDF
+async function readPDF(file) {
+    const buffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(buffer).promise;
+
+    let text = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        content.items.forEach(item => text += item.str + " ");
     }
 
-    // Submit on Enter key
-    document.getElementById("nameInput").addEventListener("keypress", function(e) {
-        if (e.key === "Enter") {
-            sayHello();
+    parseText(text);
+}
+
+// Parse words
+function parseText(text) {
+    words = [];
+
+    text.split("\n").forEach(line => {
+        let parts = line.split("-");
+        if (parts.length === 2) {
+            words.push({
+                en: parts[0].trim(),
+                he: parts[1].trim()
+            });
         }
     });
+
+    if (words.length === 0) {
+        alert("No valid words found");
+        return;
+    }
+
+    startQuiz();
+}
+
+// Start quiz
+function startQuiz() {
+    document.getElementById("quiz").style.display = "block";
+    nextWord();
+}
+
+// Next word
+function nextWord() {
+    current = words[Math.floor(Math.random() * words.length)];
+    document.getElementById("word").innerText = current.en;
+    document.getElementById("answer").value = "";
+}
+
+// Check answer
+function checkAnswer() {
+    let user = document.getElementById("answer").value.trim();
+
+    if (user === current.he) {
+        success();
+    } else {
+        alert("❌ Wrong!\nCorrect: " + current.he);
+    }
+
+    nextWord();
+}
+
+// Success animation
+function success() {
+    alert("🎉 Correct!");
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let balloons = [];
+
+    for (let i = 0; i < 20; i++) {
+        balloons.push({
+            x: Math.random() * canvas.width,
+            y: canvas.height,
+            r: 10 + Math.random() * 10,
+            dy: 2 + Math.random() * 3
+        });
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        balloons.forEach(b => {
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+            ctx.fillStyle = "red";
+            ctx.fill();
+            b.y -= b.dy;
+        });
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    setTimeout(() => ctx.clearRect(0,0,canvas.width,canvas.height), 2000);
+}
 </script>
 
 </body>

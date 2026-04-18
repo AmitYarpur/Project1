@@ -1,0 +1,7 @@
+add new changes from remote to github:
+	git add .
+	git commit -m "fix site"
+	git push	
+
+if needs to fetch and re-base:
+	git pull origin main --rebase
